@@ -52,11 +52,10 @@
                     </div>
                     <div class="card-body">
                         <form hx-post="/feature1" hx-target="#res1" hx-trigger="submit">
-                            <div hx-get="/api/countries" hx-trigger="load" hx-swap="innerHTML">
-                                <select class="form-select mb-3" name="country_code">
-                                    <option>Loading...</option>
-                                </select>
-                            </div>
+                            <select class="form-select mb-3" name="country_code" 
+                                    hx-get="/api/countries" hx-trigger="load" hx-swap="innerHTML">
+                                <option>Loading...</option>
+                            </select>
                         </form>
                         <div id="res1" class="result-box"></div>
                     </div>
@@ -72,16 +71,14 @@
                     </div>
                     <div class="card-body">
                         <form hx-post="/feature2" hx-target="#res2" hx-trigger="submit">
-                            <div hx-get="/api/subregions" hx-trigger="load" hx-swap="innerHTML">
-                                <select class="form-select mb-2" name="subregion_id">
-                                    <option>Loading...</option>
-                                </select>
-                            </div>
-                            <div hx-get="/api/decades" hx-trigger="load" hx-swap="innerHTML">
-                                <select class="form-select mb-3" name="decade">
-                                    <option>Loading...</option>
-                                </select>
-                            </div>
+                            <select class="form-select mb-2" name="subregion_id" 
+                                    hx-get="/api/subregions" hx-trigger="load" hx-swap="innerHTML">
+                                <option>Loading...</option>
+                            </select>
+                            <select class="form-select mb-3" name="decade" 
+                                    hx-get="/api/decades" hx-trigger="load" hx-swap="innerHTML">
+                                <option>Loading...</option>
+                            </select>
                             <button class="btn btn-dark btn-sm w-100" type="submit">Analyze</button>
                         </form>
                         <div id="res2" class="result-box"></div>
@@ -98,16 +95,14 @@
                     </div>
                     <div class="card-body">
                         <form hx-post="/feature3" hx-target="#res3" hx-trigger="submit">
-                            <div hx-get="/api/regions" hx-trigger="load" hx-swap="innerHTML">
-                                <select class="form-select mb-2" name="region_id">
-                                    <option>Loading...</option>
-                                </select>
-                            </div>
-                            <div hx-get="/api/decades" hx-trigger="load" hx-swap="innerHTML">
-                                <select class="form-select mb-3" name="decade">
-                                    <option>Loading...</option>
-                                </select>
-                            </div>
+                            <select class="form-select mb-2" name="region_id" 
+                                    hx-get="/api/regions" hx-trigger="load" hx-swap="innerHTML">
+                                <option>Loading...</option>
+                            </select>
+                            <select class="form-select mb-3" name="decade" 
+                                    hx-get="/api/decades" hx-trigger="load" hx-swap="innerHTML">
+                                <option>Loading...</option>
+                            </select>
                             <button class="btn btn-dark btn-sm w-100" type="submit">Find Max</button>
                         </form>
                         <div id="res3" class="result-box"></div>

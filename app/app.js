@@ -46,11 +46,9 @@ app.get('/api/countries', (req, res) => {
       return res.send('<select class="form-select mb-3" name="country_code"><option>No countries found</option></select>');
     }
     console.log(`✅ Loaded ${results.length} countries`);
-    let select = '<select class="form-select mb-3" name="country_code" onchange="this.form.requestSubmit()">';
-    select += '<option value="" selected>Select a Country</option>';
-    results.forEach(r => select += `<option value="${r.code}">${r.name}</option>`);
-    select += '</select>';
-    res.send(select);
+    let options = '<option value="" selected>Select a Country</option>';
+    results.forEach(r => options += `<option value="${r.code}">${r.name}</option>`);
+    res.send(options);
   });
 });
 
@@ -65,11 +63,9 @@ app.get('/api/regions', (req, res) => {
       return res.send('<select class="form-select mb-2" name="region_id"><option>No regions found</option></select>');
     }
     console.log(`✅ Loaded ${results.length} regions`);
-    let select = '<select class="form-select mb-2" name="region_id">';
-    select += '<option value="" selected>Select Region</option>';
-    results.forEach(r => select += `<option value="${r.id}">${r.name}</option>`);
-    select += '</select>';
-    res.send(select);
+    let options = '<option value="" selected>Select Region</option>';
+    results.forEach(r => options += `<option value="${r.id}">${r.name}</option>`);
+    res.send(options);
   });
 });
 
@@ -85,11 +81,9 @@ app.get('/api/subregions', (req, res) => {
       return res.send('<select class="form-select mb-2" name="subregion_id"><option>No sub-regions found</option></select>');
     }
     console.log(`✅ Loaded ${results.length} sub-regions`);
-    let select = '<select class="form-select mb-2" name="subregion_id">';
-    select += '<option value="" selected>Select Sub-Region</option>';
-    results.forEach(r => select += `<option value="${r.id}">${r.name}</option>`);
-    select += '</select>';
-    res.send(select);
+    let options = '<option value="" selected>Select Sub-Region</option>';
+    results.forEach(r => options += `<option value="${r.id}">${r.name}</option>`);
+    res.send(options);
   });
 });
 
@@ -104,11 +98,9 @@ app.get('/api/decades', (req, res) => {
       return res.send('<select class="form-select mb-3" name="decade"><option>No decades found</option></select>');
     }
     console.log(`✅ Loaded ${results.length} decades`);
-    let select = '<select class="form-select mb-3" name="decade">';
-    select += '<option value="" selected>Select Decade</option>';
-    results.forEach(r => select += `<option value="${r.year}">${r.year}s</option>`);
-    select += '</select>';
-    res.send(select);
+    let options = '<option value="" selected>Select Decade</option>';
+    results.forEach(r => options += `<option value="${r.year}">${r.year}s</option>`);
+    res.send(options);
   });
 });
 
