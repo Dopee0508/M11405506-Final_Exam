@@ -39,16 +39,18 @@ app.get('/api/countries', (req, res) => {
   pool.query('SELECT DISTINCT code, name FROM countries ORDER BY name ASC', (err, results) => {
     if (err) {
       console.error('❌ /api/countries error:', err.message);
-      return res.send('<option>Error loading data</option>');
+      return res.send('<select class="form-select mb-3" name="country_code"><option>Error loading data</option></select>');
     }
     if (!results || results.length === 0) {
       console.warn('⚠️ No countries found in database');
-      return res.send('<option>No countries found</option>');
+      return res.send('<select class="form-select mb-3" name="country_code"><option>No countries found</option></select>');
     }
     console.log(`✅ Loaded ${results.length} countries`);
-    let options = '<option value="" selected>Select a Country</option>';
-    results.forEach(r => options += `<option value="${r.code}">${r.name}</option>`);
-    res.send(options);
+    let select = '<select class="form-select mb-3" name="country_code" onchange="htmx.trigger(this.form, \'submit\')">';
+    select += '<option value="" selected>Select a Country</option>';
+    results.forEach(r => select += `<option value="${r.code}">${r.name}</option>`);
+    select += '</select>';
+    res.send(select);
   });
 });
 
@@ -56,16 +58,18 @@ app.get('/api/regions', (req, res) => {
   pool.query('SELECT DISTINCT id, name FROM regions ORDER BY name ASC', (err, results) => {
     if (err) {
       console.error('❌ /api/regions error:', err.message);
-      return res.send('<option>Error loading data</option>');
+      return res.send('<select class="form-select mb-2" name="region_id"><option>Error loading data</option></select>');
     }
     if (!results || results.length === 0) {
       console.warn('⚠️ No regions found in database');
-      return res.send('<option>No regions found</option>');
+      return res.send('<select class="form-select mb-2" name="region_id"><option>No regions found</option></select>');
     }
     console.log(`✅ Loaded ${results.length} regions`);
-    let options = '<option value="" selected>Select Region</option>';
-    results.forEach(r => options += `<option value="${r.id}">${r.name}</option>`);
-    res.send(options);
+    let select = '<select class="form-select mb-2" name="region_id">';
+    select += '<option value="" selected>Select Region</option>';
+    results.forEach(r => select += `<option value="${r.id}">${r.name}</option>`);
+    select += '</select>';
+    res.send(select);
   });
 });
 
@@ -74,16 +78,18 @@ app.get('/api/subregions', (req, res) => {
   pool.query('SELECT MIN(id) as id, name FROM sub_regions GROUP BY name ORDER BY name ASC', (err, results) => {
     if (err) {
       console.error('❌ /api/subregions error:', err.message);
-      return res.send('<option>Error loading data</option>');
+      return res.send('<select class="form-select mb-2" name="subregion_id"><option>Error loading data</option></select>');
     }
     if (!results || results.length === 0) {
       console.warn('⚠️ No sub-regions found in database');
-      return res.send('<option>No sub-regions found</option>');
+      return res.send('<select class="form-select mb-2" name="subregion_id"><option>No sub-regions found</option></select>');
     }
     console.log(`✅ Loaded ${results.length} sub-regions`);
-    let options = '<option value="" selected>Select Sub-Region</option>';
-    results.forEach(r => options += `<option value="${r.id}">${r.name}</option>`);
-    res.send(options);
+    let select = '<select class="form-select mb-2" name="subregion_id">';
+    select += '<option value="" selected>Select Sub-Region</option>';
+    results.forEach(r => select += `<option value="${r.id}">${r.name}</option>`);
+    select += '</select>';
+    res.send(select);
   });
 });
 
@@ -91,16 +97,18 @@ app.get('/api/decades', (req, res) => {
   pool.query('SELECT DISTINCT year FROM dadd_records ORDER BY year ASC', (err, results) => {
     if (err) {
       console.error('❌ /api/decades error:', err.message);
-      return res.send('<option>Error loading data</option>');
+      return res.send('<select class="form-select mb-3" name="decade"><option>Error loading data</option></select>');
     }
     if (!results || results.length === 0) {
       console.warn('⚠️ No decades found in database');
-      return res.send('<option>No decades found</option>');
+      return res.send('<select class="form-select mb-3" name="decade"><option>No decades found</option></select>');
     }
     console.log(`✅ Loaded ${results.length} decades`);
-    let options = '<option value="" selected>Select Decade</option>';
-    results.forEach(r => options += `<option value="${r.year}">${r.year}s</option>`);
-    res.send(options);
+    let select = '<select class="form-select mb-3" name="decade">';
+    select += '<option value="" selected>Select Decade</option>';
+    results.forEach(r => select += `<option value="${r.year}">${r.year}s</option>`);
+    select += '</select>';
+    res.send(select);
   });
 });
 
