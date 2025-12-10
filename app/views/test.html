@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html><head><meta charset='UTF-8'><title>Test</title></head>
+<body>
+<h1>API Test</h1>
+<div id='test'></div>
+<script>
+fetch('/api/countries').then(r => r.text()).then(html => {
+  document.getElementById('test').innerHTML = html;
+});
+</script>
+</body></html>

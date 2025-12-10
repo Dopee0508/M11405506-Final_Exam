@@ -3,25 +3,24 @@ services:
   db:
     image: mysql:8.0
     container_name: dadd_db_container
-    # 解決 MySQL 認證插件問題
     command: --default-authentication-plugin=mysql_native_password
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: dadd_db
     volumes:
-      # 1. 為了讓 Load Data Infile 讀得到 CSV，必須掛載到這裡
       - ./database/data1.csv:/var/lib/mysql-files/data1.csv
       - ./database/data2.csv:/var/lib/mysql-files/data2.csv
-      # 2. 自動執行 ETL 腳本
       - ./database/ETL.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
       - "3306:3306"
+    # [新增] 健康檢查：這是解決 Loading 的關鍵！
     healthcheck:
-      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
-      timeout: 20s
-      retries: 10
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost", "-u", "root", "-proot"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
 
-  # Web 應用程式 (Node.js)
+  # Web 應用程式
   web:
     build: ./app
     ports:
@@ -32,6 +31,7 @@ services:
       DB_PASSWORD: root
       DB_NAME: dadd_db
       DB_PORT: 3306
+    # [修改] 等待資料庫健康檢查通過才啟動
     depends_on:
       db:
         condition: service_healthy

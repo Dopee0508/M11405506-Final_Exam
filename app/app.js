@@ -46,7 +46,7 @@ app.get('/api/countries', (req, res) => {
       return res.send('<select class="form-select mb-3" name="country_code"><option>No countries found</option></select>');
     }
     console.log(`✅ Loaded ${results.length} countries`);
-    let select = '<select class="form-select mb-3" name="country_code" onchange="htmx.trigger(this.form, \'submit\')">';
+    let select = '<select class="form-select mb-3" name="country_code" onchange="this.form.requestSubmit()">';
     select += '<option value="" selected>Select a Country</option>';
     results.forEach(r => select += `<option value="${r.code}">${r.name}</option>`);
     select += '</select>';
