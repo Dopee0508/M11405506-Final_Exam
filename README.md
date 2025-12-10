@@ -1,74 +1,37 @@
-\# Final Exam: DADD Web Application
+# Final Exam: DADD Web Application
 
-
-
-\## Database Design (ER Model)
-
-
+## Database Design (ER Model)
 
 This project uses a relational database design conforming to the 3rd Normal Form (3NF).
-
 It consists of 4 entities to handle hierarchical region data and disaster statistics.
 
-
-
 ```mermaid
-
 erDiagram
+    Regions ||--|{ SubRegions : contains
+    SubRegions ||--|{ Countries : contains
+    Countries ||--|{ DADD_Records : "has records"
 
-&nbsp;   Regions ||--|{ SubRegions : contains
+    Regions {
+        int id PK
+        string name "Continent name"
+    }
 
-&nbsp;   SubRegions ||--|{ Countries : contains
+    SubRegions {
+        int id PK
+        string name "Sub-region name"
+        int region_id FK
+    }
 
-&nbsp;   Countries ||--|{ DADD\_Records : "has records"
+    Countries {
+        string iso_code PK "ISO-3 Code"
+        string name "Country Name"
+        string iso_code_2 "ISO-2 Code"
+        int subregion_id FK
+    }
 
-
-
-&nbsp;   Regions {
-
-&nbsp;       int id PK
-
-&nbsp;       string name "Continent name (e.g., Asia)"
-
-&nbsp;   }
-
-
-
-&nbsp;   SubRegions {
-
-&nbsp;       int id PK
-
-&nbsp;       string name "Sub-region name (e.g., Southern Asia)"
-
-&nbsp;       int region\_id FK
-
-&nbsp;   }
-
-
-
-&nbsp;   Countries {
-
-&nbsp;       char(3) iso\_code PK "ISO-3 Code (e.g., TWN)"
-
-&nbsp;       string name "Country Name"
-
-&nbsp;       char(2) iso\_code\_2 "ISO-2 Code"
-
-&nbsp;       int subregion\_id FK
-
-&nbsp;   }
-
-
-
-&nbsp;   DADD\_Records {
-
-&nbsp;       int id PK
-
-&nbsp;       char(3) country\_code FK
-
-&nbsp;       int year "Decade start year"
-
-&nbsp;       float amount "Death count"
-
-&nbsp;   }
-
+    DADD_Records {
+        int id PK
+        string country_code FK
+        int year "Decade start year"
+        float amount "Death count"
+    }

@@ -1,72 +1,65 @@
--- DADD Exam ETL Script
--- This script handles Database Creation, Data Extraction, Transformation, and Loading.
+-- DADD Exam ETL Script (Final Windows Fix)
 
--- ==========================================
--- 1. Database Schema Creation (DDL)
---    Design based on 3rd Normal Form (3NF)
--- ==========================================
+CREATE DATABASE IF NOT EXISTS dadd_db;
+USE dadd_db;
 
--- Drop tables if they exist to ensure a clean start
-DROP TABLE IF EXISTS DADD_Records CASCADE;
-DROP TABLE IF EXISTS Countries CASCADE;
-DROP TABLE IF EXISTS SubRegions CASCADE;
-DROP TABLE IF EXISTS Regions CASCADE;
+-- 寬容模式，避免因為 CSV 格式小問題而報錯停止
+SET SESSION sql_mode = '';
+SET FOREIGN_KEY_CHECKS = 0;
 
--- Table 1: Regions
--- Stores the main continents/regions (e.g., Asia, Africa)
-CREATE TABLE Regions (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(255) UNIQUE NOT NULL
+-- 1. 清理舊表
+DROP TABLE IF EXISTS dadd_records;
+DROP TABLE IF EXISTS countries;
+DROP TABLE IF EXISTS sub_regions;
+DROP TABLE IF EXISTS regions;
+
+-- 2. 建立正式表格 (3NF)
+CREATE TABLE regions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL UNIQUE
 );
 
--- Table 2: SubRegions
--- Stores sub-continents (e.g., Southern Asia), linked to Regions
-CREATE TABLE SubRegions (
-    id SERIAL PRIMARY KEY,
+CREATE TABLE sub_regions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
-    region_id INTEGER REFERENCES Regions(id) ON DELETE CASCADE,
-    UNIQUE(name, region_id) -- Prevent duplicates
+    region_id INT,
+    FOREIGN KEY (region_id) REFERENCES regions(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_sub_region (name, region_id)
 );
 
--- Table 3: Countries
--- Stores country information, linked to SubRegions
--- Using ISO-3 code as the Primary Key as it is standard and unique
-CREATE TABLE Countries (
+CREATE TABLE countries (
     code CHAR(3) PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     code2 CHAR(2),
-    subregion_id INTEGER REFERENCES SubRegions(id) ON DELETE SET NULL
+    subregion_id INT,
+    FOREIGN KEY (subregion_id) REFERENCES sub_regions(id) ON DELETE SET NULL
 );
 
--- Table 4: DADD_Records
--- Stores the Decadal Average Annual Number of Deaths
--- This is the fact table linked to Countries
-CREATE TABLE DADD_Records (
-    id SERIAL PRIMARY KEY,
-    country_code CHAR(3) REFERENCES Countries(code) ON DELETE CASCADE,
-    year INTEGER NOT NULL, -- Represents the start of the decade (e.g., 1960)
-    amount FLOAT DEFAULT 0
+CREATE TABLE dadd_records (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    country_code CHAR(3),
+    year INT NOT NULL,
+    amount FLOAT DEFAULT 0,
+    FOREIGN KEY (country_code) REFERENCES countries(code) ON DELETE CASCADE
 );
 
--- ==========================================
--- 2. Data Extraction (Staging)
---    Load raw CSV data into temporary tables
--- ==========================================
+SET FOREIGN_KEY_CHECKS = 1;
 
--- Create temporary table for data1.csv (Facts)
-CREATE TEMP TABLE raw_facts (
+-- 3. 建立暫存表 (Staging)
+DROP TEMPORARY TABLE IF EXISTS temp_facts;
+CREATE TEMPORARY TABLE temp_facts (
     Entity VARCHAR(255),
-    Code VARCHAR(10),
-    Year INTEGER,
-    DADD FLOAT
+    Code VARCHAR(50),
+    Year INT,
+    DADD VARCHAR(50) -- 先用文字接，避免浮點數轉換錯誤
 );
 
--- Create temporary table for data2.csv (Nations/Regions)
-CREATE TEMP TABLE raw_nations (
+DROP TEMPORARY TABLE IF EXISTS temp_nations;
+CREATE TEMPORARY TABLE temp_nations (
     name VARCHAR(255),
-    alpha_2 VARCHAR(2),
-    alpha_3 VARCHAR(3),
-    country_code INTEGER,
+    alpha_2 VARCHAR(50),
+    alpha_3 VARCHAR(50),
+    country_code INT,
     region VARCHAR(255),
     sub_region VARCHAR(255),
     intermediate_region VARCHAR(255),
@@ -75,57 +68,47 @@ CREATE TEMP TABLE raw_nations (
     intermediate_region_code VARCHAR(50)
 );
 
--- Load data from CSV files
--- NOTE: In Docker, we will mount the /database folder to /data inside the container
-COPY raw_facts FROM '/data/data1.csv' DELIMITER ',' CSV HEADER;
-COPY raw_nations FROM '/data/data2.csv' DELIMITER ',' CSV HEADER;
+-- 4. 載入 CSV (針對 Windows 換行符號最佳化)
+LOAD DATA INFILE '/var/lib/mysql-files/data1.csv'
+INTO TABLE temp_facts
+FIELDS TERMINATED BY ',' 
+ENCLOSED BY '"'
+LINES TERMINATED BY '\r\n'
+IGNORE 1 ROWS;
 
--- ==========================================
--- 3. Transformation and Loading (ETL)
---    Clean data and insert into 3NF tables
--- ==========================================
+LOAD DATA INFILE '/var/lib/mysql-files/data2.csv'
+INTO TABLE temp_nations
+FIELDS TERMINATED BY ',' 
+ENCLOSED BY '"'
+LINES TERMINATED BY '\r\n'
+IGNORE 1 ROWS;
 
--- Step 3.1: Load Regions
--- Extract distinct regions from raw_nations
-INSERT INTO Regions (name)
-SELECT DISTINCT region 
-FROM raw_nations 
-WHERE region IS NOT NULL;
+-- 5. 執行 ETL 轉換 (使用 TRIM 去除隱藏空白)
 
--- Step 3.2: Load SubRegions
--- Extract distinct sub-regions and link them to Region IDs
-INSERT INTO SubRegions (name, region_id)
-SELECT DISTINCT n.sub_region, r.id
-FROM raw_nations n
-JOIN Regions r ON n.region = r.name
-WHERE n.sub_region IS NOT NULL;
+-- 5.1 Regions
+INSERT IGNORE INTO regions (name)
+SELECT DISTINCT TRIM(region)
+FROM temp_nations 
+WHERE region IS NOT NULL AND region != '';
 
--- Step 3.3: Load Countries
--- Extract countries and link them to SubRegion IDs
--- Filter: Only include valid ISO-3 codes
-INSERT INTO Countries (code, name, code2, subregion_id)
-SELECT DISTINCT n.alpha_3, n.name, n.alpha_2, s.id
-FROM raw_nations n
-JOIN Regions r ON n.region = r.name
-JOIN SubRegions s ON n.sub_region = s.name AND s.region_id = r.id
-WHERE n.alpha_3 IS NOT NULL;
+-- 5.2 SubRegions
+INSERT IGNORE INTO sub_regions (name, region_id)
+SELECT DISTINCT TRIM(n.sub_region), r.id
+FROM temp_nations n
+JOIN regions r ON TRIM(n.region) = r.name
+WHERE n.sub_region IS NOT NULL AND n.sub_region != '';
 
--- Step 3.4: Load DADD Records
--- Transform logic:
--- 1. Join raw_facts with Countries to ensure referential integrity.
--- 2. Filter out erroneous data: 
---    - Rows where 'Code' in raw_facts is NULL or empty (often aggregate regions like "World").
---    - Rows that do not match any country in our Countries table.
-INSERT INTO DADD_Records (country_code, year, amount)
-SELECT f.Code, f.Year, f.DADD
-FROM raw_facts f
-JOIN Countries c ON f.Code = c.code -- This JOIN acts as a filter for valid countries only
-WHERE f.Code IS NOT NULL 
-  AND f.DADD IS NOT NULL;
+-- 5.3 Countries
+INSERT IGNORE INTO countries (code, name, code2, subregion_id)
+SELECT DISTINCT TRIM(n.alpha_3), TRIM(n.name), TRIM(n.alpha_2), s.id
+FROM temp_nations n
+JOIN regions r ON TRIM(n.region) = r.name
+JOIN sub_regions s ON TRIM(n.sub_region) = s.name AND s.region_id = r.id
+WHERE n.alpha_3 IS NOT NULL AND CHAR_LENGTH(TRIM(n.alpha_3)) = 3;
 
--- Clean up
-DROP TABLE raw_facts;
-DROP TABLE raw_nations;
-
--- Verification (Optional comment for log)
--- SELECT count(*) FROM DADD_Records;
+-- 5.4 DADD Records
+INSERT INTO dadd_records (country_code, year, amount)
+SELECT TRIM(f.Code), f.Year, CAST(f.DADD AS FLOAT)
+FROM temp_facts f
+JOIN countries c ON TRIM(f.Code) = c.code
+WHERE f.DADD IS NOT NULL AND f.DADD != '';
