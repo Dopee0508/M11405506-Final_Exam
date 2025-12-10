@@ -29,7 +29,7 @@ pool.getConnection((err, connection) => {
 });
 
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'views', 'index.html'));
+  res.sendFile(path.join(__dirname, 'views', 'index_new.html'));
 });
 
 // ==========================================
@@ -145,6 +145,98 @@ app.post('/feature4', (req, res) => {
     let html = '<table class="table table-sm"><thead><tr><th>Country</th><th>Decade</th><th>Deaths</th></tr></thead><tbody>';
     results.forEach(r => html += `<tr><td>${r.name}</td><td>${r.year}s</td><td><strong>${r.amount}</strong></td></tr>`);
     res.send(html + '</tbody></table>');
+  });
+});
+
+// Feature 5: Add new DADD record for next decade
+app.post('/feature5', (req, res) => {
+  const { country_code, amount } = req.body;
+  
+  // Get the latest decade for this country
+  const getMaxYearSql = 'SELECT MAX(year) as max_year FROM dadd_records WHERE country_code = ?';
+  pool.query(getMaxYearSql, [country_code], (err, results) => {
+    if (err) {
+      console.error('Error getting max year:', err);
+      return res.send('<div class="alert alert-danger">Error retrieving data</div>');
+    }
+    
+    const nextDecade = results[0].max_year ? results[0].max_year + 10 : 2020;
+    
+    // Insert new record
+    const insertSql = 'INSERT INTO dadd_records (country_code, year, amount) VALUES (?, ?, ?)';
+    pool.query(insertSql, [country_code, nextDecade, amount], (err2, result) => {
+      if (err2) {
+        console.error('Error inserting record:', err2);
+        return res.send('<div class="alert alert-danger">Error adding record</div>');
+      }
+      res.send(`<div class="alert alert-success">✓ Successfully added record for ${nextDecade}s with value ${amount}</div>`);
+    });
+  });
+});
+
+// Feature 6: Update existing DADD record
+app.post('/feature6', (req, res) => {
+  const { country_code, decade, amount } = req.body;
+  
+  const sql = 'UPDATE dadd_records SET amount = ? WHERE country_code = ? AND year = ?';
+  pool.query(sql, [amount, country_code, decade], (err, result) => {
+    if (err) {
+      console.error('Error updating record:', err);
+      return res.send('<div class="alert alert-danger">Error updating record</div>');
+    }
+    if (result.affectedRows === 0) {
+      return res.send('<div class="alert alert-warning">No record found to update</div>');
+    }
+    res.send(`<div class="alert alert-success">✓ Successfully updated ${result.affectedRows} record(s)</div>`);
+  });
+});
+
+// Feature 7: Delete DADD records in decade range
+app.post('/feature7', (req, res) => {
+  const { country_code, start_decade, end_decade } = req.body;
+  
+  const sql = 'DELETE FROM dadd_records WHERE country_code = ? AND year >= ? AND year <= ?';
+  pool.query(sql, [country_code, start_decade, end_decade], (err, result) => {
+    if (err) {
+      console.error('Error deleting records:', err);
+      return res.send('<div class="alert alert-danger">Error deleting records</div>');
+    }
+    res.send(`<div class="alert alert-success">✓ Successfully deleted ${result.affectedRows} record(s)</div>`);
+  });
+});
+
+// Feature 8: Compare regions - show average DADD by region for a decade
+app.post('/feature8', (req, res) => {
+  const { decade } = req.body;
+  
+  const sql = `
+    SELECT r.name as region_name, 
+           AVG(d.amount) as avg_dadd,
+           COUNT(DISTINCT c.code) as country_count
+    FROM dadd_records d
+    JOIN countries c ON d.country_code = c.code
+    JOIN sub_regions s ON c.subregion_id = s.id
+    JOIN regions r ON s.region_id = r.id
+    WHERE d.year = ?
+    GROUP BY r.id, r.name
+    ORDER BY avg_dadd DESC
+  `;
+  
+  pool.query(sql, [decade], (err, results) => {
+    if (err) {
+      console.error('Error comparing regions:', err);
+      return res.send('<div class="alert alert-danger">Error retrieving data</div>');
+    }
+    if (results.length === 0) {
+      return res.send('<div class="text-muted p-2">No data found for this decade.</div>');
+    }
+    
+    let html = '<table class="table"><thead><tr><th>Region</th><th>Avg DADD</th><th>Countries</th></tr></thead><tbody>';
+    results.forEach(r => {
+      html += `<tr><td><strong>${r.region_name}</strong></td><td>${r.avg_dadd.toFixed(1)}</td><td>${r.country_count}</td></tr>`;
+    });
+    html += '</tbody></table>';
+    res.send(html);
   });
 });
 

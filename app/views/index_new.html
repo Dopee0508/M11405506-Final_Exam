@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DADD Analytics Dashboard</title>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { margin: 0; padding: 0; background: #f5f5f5; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        
+        /* Header */
+        .navbar-custom {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            padding: 15px 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        .navbar-brand {
+            color: white !important;
+            font-size: 24px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .globe-icon { width: 32px; height: 32px; stroke: white; fill: none; stroke-width: 2; }
+        
+        /* Tabs */
+        .nav-tabs { border-bottom: 2px solid #dee2e6; margin: 20px 0; }
+        .nav-tabs .nav-link {
+            color: #495057;
+            border: none;
+            border-bottom: 3px solid transparent;
+            padding: 12px 24px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        .nav-tabs .nav-link:hover { color: #212529; background: rgba(0,0,0,0.03); }
+        .nav-tabs .nav-link.active {
+            color: #212529;
+            background: white;
+            border-bottom: 3px solid #212529;
+        }
+        
+        /* Cards */
+        .feature-card {
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+        }
+        .feature-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        /* Forms */
+        .form-label { font-weight: 500; margin-bottom: 8px; color: #495057; }
+        .form-select, .form-control {
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 10px 12px;
+        }
+        .form-select:focus, .form-control:focus {
+            border-color: #495057;
+            box-shadow: 0 0 0 0.2rem rgba(73, 80, 87, 0.15);
+        }
+        
+        /* Buttons */
+        .btn-primary {
+            background: #212529;
+            border: none;
+            padding: 10px 24px;
+            font-weight: 500;
+            border-radius: 6px;
+            transition: all 0.3s;
+        }
+        .btn-primary:hover { background: #000; transform: translateY(-1px); }
+        .btn-success { border-radius: 6px; padding: 10px 24px; font-weight: 500; }
+        .btn-danger { border-radius: 6px; padding: 10px 24px; font-weight: 500; }
+        
+        /* Results */
+        .result-box {
+            margin-top: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+            background: #fafafa;
+            border-radius: 6px;
+            padding: 15px;
+        }
+        .table { margin-bottom: 0; background: white; }
+        .table thead { background: #f8f9fa; }
+        .table th { font-weight: 600; border-bottom: 2px solid #dee2e6; }
+        
+        /* Message */
+        .alert { border-radius: 6px; margin-top: 15px; }
+        
+        /* Loading */
+        .loading { color: #6c757d; font-style: italic; }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <nav class="navbar-custom">
+        <div class="navbar-brand">
+            <svg class="globe-icon" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M2 12h20"/>
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+            </svg>
+            DADD Analytics Dashboard
+        </div>
+    </nav>
+
+    <div class="container-fluid" style="max-width: 1400px; padding: 20px;">
+        
+        <!-- Tabs Navigation -->
+        <ul class="nav nav-tabs" role="tablist">
+            <li class="nav-item">
+                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#query" type="button">📊 Query</button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#manage" type="button">✏️ Manage Data</button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#compare" type="button">📈 Compare</button>
+            </li>
+        </ul>
+
+        <!-- Tab Content -->
+        <div class="tab-content">
+            
+            <!-- Query Tab -->
+            <div class="tab-pane fade show active" id="query">
+                <div class="row">
+                    
+                    <!-- Feature 1: Country History -->
+                    <div class="col-lg-6">
+                        <div class="feature-card">
+                            <h5 class="feature-title">📈 Country History</h5>
+                            <p class="text-muted">View historical DADD data for a specific country</p>
+                            
+                            <form hx-post="/feature1" hx-target="#result1">
+                                <div class="mb-3">
+                                    <label class="form-label">Select Country</label>
+                                    <select class="form-select" name="country_code" required
+                                            hx-get="/api/countries" hx-trigger="load" hx-swap="innerHTML">
+                                        <option value="">Loading...</option>
+                                    </select>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100">View History</button>
+                            </form>
+                            <div id="result1" class="result-box"></div>
+                        </div>
+                    </div>
+
+                    <!-- Feature 2: Sub-Region Ranking -->
+                    <div class="col-lg-6">
+                        <div class="feature-card">
+                            <h5 class="feature-title">🌍 Sub-Region Ranking</h5>
+                            <p class="text-muted">Countries ranked by DADD in a sub-region</p>
+                            
+                            <form hx-post="/feature2" hx-target="#result2">
+                                <div class="mb-3">
+                                    <label class="form-label">Select Sub-Region</label>
+                                    <select class="form-select" name="subregion_id" required
+                                            hx-get="/api/subregions" hx-trigger="load" hx-swap="innerHTML">
+                                        <option value="">Loading...</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Select Decade</label>
+                                    <select class="form-select" name="decade" required
+                                            hx-get="/api/decades" hx-trigger="load" hx-swap="innerHTML">
+                                        <option value="">Loading...</option>
+                                    </select>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100">Show Ranking</button>
+                            </form>
+                            <div id="result2" class="result-box"></div>
+                        </div>
+                    </div>
+
+                    <!-- Feature 3: Region Max Stats -->
+                    <div class="col-lg-6">
+                        <div class="feature-card">
+                            <h5 class="feature-title">📊 Regional Maximum</h5>
+                            <p class="text-muted">Maximum DADD by sub-regions in a region</p>
+                            
+                            <form hx-post="/feature3" hx-target="#result3">
+                                <div class="mb-3">
+                                    <label class="form-label">Select Region</label>
+                                    <select class="form-select" name="region_id" required
+                                            hx-get="/api/regions" hx-trigger="load" hx-swap="innerHTML">
+                                        <option value="">Loading...</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Select Decade</label>
+                                    <select class="form-select" name="decade" required
+                                            hx-get="/api/decades" hx-trigger="load" hx-swap="innerHTML">
+                                        <option value="">Loading...</option>
+                                    </select>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100">Find Maximum</button>
+                            </form>
+                            <div id="result3" class="result-box"></div>
+                        </div>
+                    </div>
+
+                    <!-- Feature 4: Search -->
+                    <div class="col-lg-6">
+                        <div class="feature-card">
+                            <h5 class="feature-title">🔍 Search Countries</h5>
+                            <p class="text-muted">Search by country name (most recent decade)</p>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Country Name</label>
+                                <input type="text" class="form-control" name="keyword" 
+                                       placeholder="Type country name..."
+                                       hx-post="/feature4" hx-trigger="keyup changed delay:500ms" hx-target="#result4">
+                            </div>
+                            <div id="result4" class="result-box"></div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Manage Data Tab -->
+            <div class="tab-pane fade" id="manage">
+                <div class="row">
+                    
+                    <!-- Feature 5: Add Record -->
+                    <div class="col-lg-4">
+                        <div class="feature-card">
+                            <h5 class="feature-title">➕ Add New Record</h5>
+                            <p class="text-muted">Add DADD record for next decade</p>
+                            
+                            <form hx-post="/feature5" hx-target="#result5">
+                                <div class="mb-3">
+                                    <label class="form-label">Select Country</label>
+                                    <select class="form-select" name="country_code" required
+                                            hx-get="/api/countries" hx-trigger="load" hx-swap="innerHTML">
+                                        <option value="">Loading...</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">DADD Value</label>
+                                    <input type="number" step="0.1" class="form-control" name="amount" 
+                                           placeholder="Enter death count" required>
+                                </div>
+                                <button type="submit" class="btn btn-success w-100">Add Record</button>
+                            </form>
+                            <div id="result5"></div>
+                        </div>
+                    </div>
+
+                    <!-- Feature 6: Update Record -->
+                    <div class="col-lg-4">
+                        <div class="feature-card">
+                            <h5 class="feature-title">✏️ Update Record</h5>
+                            <p class="text-muted">Modify existing DADD record</p>
+                            
+                            <form hx-post="/feature6" hx-target="#result6">
+                                <div class="mb-3">
+                                    <label class="form-label">Select Country</label>
+                                    <select class="form-select" name="country_code" required
+                                            hx-get="/api/countries" hx-trigger="load" hx-swap="innerHTML">
+                                        <option value="">Loading...</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Select Decade</label>
+                                    <select class="form-select" name="decade" required
+                                            hx-get="/api/decades" hx-trigger="load" hx-swap="innerHTML">
+                                        <option value="">Loading...</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">New DADD Value</label>
+                                    <input type="number" step="0.1" class="form-control" name="amount" 
+                                           placeholder="Enter new value" required>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100">Update Record</button>
+                            </form>
+                            <div id="result6"></div>
+                        </div>
+                    </div>
+
+                    <!-- Feature 7: Delete Records -->
+                    <div class="col-lg-4">
+                        <div class="feature-card">
+                            <h5 class="feature-title">🗑️ Delete Records</h5>
+                            <p class="text-muted">Remove records in decade range</p>
+                            
+                            <form hx-post="/feature7" hx-target="#result7" 
+                                  hx-confirm="Are you sure you want to delete these records?">
+                                <div class="mb-3">
+                                    <label class="form-label">Select Country</label>
+                                    <select class="form-select" name="country_code" required
+                                            hx-get="/api/countries" hx-trigger="load" hx-swap="innerHTML">
+                                        <option value="">Loading...</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Start Decade</label>
+                                    <select class="form-select" name="start_decade" required
+                                            hx-get="/api/decades" hx-trigger="load" hx-swap="innerHTML">
+                                        <option value="">Loading...</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">End Decade</label>
+                                    <select class="form-select" name="end_decade" required
+                                            hx-get="/api/decades" hx-trigger="load" hx-swap="innerHTML">
+                                        <option value="">Loading...</option>
+                                    </select>
+                                </div>
+                                <button type="submit" class="btn btn-danger w-100">Delete Records</button>
+                            </form>
+                            <div id="result7"></div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Compare Tab (Feature 8) -->
+            <div class="tab-pane fade" id="compare">
+                <div class="feature-card">
+                    <h5 class="feature-title">📈 Regional Comparison</h5>
+                    <p class="text-muted">Compare average DADD across multiple regions</p>
+                    
+                    <form hx-post="/feature8" hx-target="#result8">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Select Decade</label>
+                                <select class="form-select" name="decade" required
+                                        hx-get="/api/decades" hx-trigger="load" hx-swap="innerHTML">
+                                    <option value="">Loading...</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">&nbsp;</label>
+                                <button type="submit" class="btn btn-primary w-100">Compare Regions</button>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="result8" class="result-box"></div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
