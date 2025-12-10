@@ -13,12 +13,13 @@ services:
       - ./database/ETL.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
       - "3306:3306"
-    # [新增] 健康檢查：這是解決 Loading 的關鍵！
+    # [新增] 健康檢查：確保資料庫完全初始化後才啟動 web
     healthcheck:
       test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost", "-u", "root", "-proot"]
       interval: 5s
       timeout: 5s
-      retries: 20
+      retries: 30
+      start_period: 30s
 
   # Web 應用程式
   web:

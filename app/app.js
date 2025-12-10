@@ -15,18 +15,29 @@ const pool = mysql.createPool({
   port: process.env.DB_PORT || 3306,
   waitForConnections: true,
   connectionLimit: 10,
-  connectTimeout: 20000
+  connectTimeout: 60000,
+  queueLimit: 0
 });
 
-// 測試資料庫連線
-pool.getConnection((err, connection) => {
-  if (err) {
-    console.error('❌ Database connection failed:', err.message);
-  } else {
-    console.log('✅ Database connected successfully!');
-    connection.release();
-  }
-});
+// 測試資料庫連線（帶重試機制）
+function testConnection(retries = 10) {
+  pool.getConnection((err, connection) => {
+    if (err) {
+      console.error(`❌ Database connection failed (${11 - retries}/10):`, err.message);
+      if (retries > 0) {
+        console.log('⏳ Retrying in 3 seconds...');
+        setTimeout(() => testConnection(retries - 1), 3000);
+      } else {
+        console.error('❌ Failed to connect to database after 10 retries');
+      }
+    } else {
+      console.log('✅ Database connected successfully!');
+      connection.release();
+    }
+  });
+}
+
+testConnection();
 
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'index.html'));
