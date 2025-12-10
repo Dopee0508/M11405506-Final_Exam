@@ -29,7 +29,7 @@ pool.getConnection((err, connection) => {
 });
 
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'views', 'index_new.html'));
+  res.sendFile(path.join(__dirname, 'views', 'index.html'));
 });
 
 // ==========================================
@@ -39,11 +39,11 @@ app.get('/api/countries', (req, res) => {
   pool.query('SELECT DISTINCT code, name FROM countries ORDER BY name ASC', (err, results) => {
     if (err) {
       console.error('❌ /api/countries error:', err.message);
-      return res.send('<select class="form-select mb-3" name="country_code"><option>Error loading data</option></select>');
+      return res.send('<option>Error loading data</option>');
     }
     if (!results || results.length === 0) {
       console.warn('⚠️ No countries found in database');
-      return res.send('<select class="form-select mb-3" name="country_code"><option>No countries found</option></select>');
+      return res.send('<option>No countries found</option>');
     }
     console.log(`✅ Loaded ${results.length} countries`);
     let options = '<option value="" selected>Select a Country</option>';
@@ -56,11 +56,11 @@ app.get('/api/regions', (req, res) => {
   pool.query('SELECT DISTINCT id, name FROM regions ORDER BY name ASC', (err, results) => {
     if (err) {
       console.error('❌ /api/regions error:', err.message);
-      return res.send('<select class="form-select mb-2" name="region_id"><option>Error loading data</option></select>');
+      return res.send('<option>Error loading data</option>');
     }
     if (!results || results.length === 0) {
       console.warn('⚠️ No regions found in database');
-      return res.send('<select class="form-select mb-2" name="region_id"><option>No regions found</option></select>');
+      return res.send('<option>No regions found</option>');
     }
     console.log(`✅ Loaded ${results.length} regions`);
     let options = '<option value="" selected>Select Region</option>';
@@ -74,11 +74,11 @@ app.get('/api/subregions', (req, res) => {
   pool.query('SELECT MIN(id) as id, name FROM sub_regions GROUP BY name ORDER BY name ASC', (err, results) => {
     if (err) {
       console.error('❌ /api/subregions error:', err.message);
-      return res.send('<select class="form-select mb-2" name="subregion_id"><option>Error loading data</option></select>');
+      return res.send('<option>Error loading data</option>');
     }
     if (!results || results.length === 0) {
       console.warn('⚠️ No sub-regions found in database');
-      return res.send('<select class="form-select mb-2" name="subregion_id"><option>No sub-regions found</option></select>');
+      return res.send('<option>No sub-regions found</option>');
     }
     console.log(`✅ Loaded ${results.length} sub-regions`);
     let options = '<option value="" selected>Select Sub-Region</option>';
@@ -91,11 +91,11 @@ app.get('/api/decades', (req, res) => {
   pool.query('SELECT DISTINCT year FROM dadd_records ORDER BY year ASC', (err, results) => {
     if (err) {
       console.error('❌ /api/decades error:', err.message);
-      return res.send('<select class="form-select mb-3" name="decade"><option>Error loading data</option></select>');
+      return res.send('<option>Error loading data</option>');
     }
     if (!results || results.length === 0) {
       console.warn('⚠️ No decades found in database');
-      return res.send('<select class="form-select mb-3" name="decade"><option>No decades found</option></select>');
+      return res.send('<option>No decades found</option>');
     }
     console.log(`✅ Loaded ${results.length} decades`);
     let options = '<option value="" selected>Select Decade</option>';
