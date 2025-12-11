@@ -20,18 +20,23 @@ const pool = mysql.createPool({
 });
 
 // 測試資料庫連線（帶重試機制）
+let isDbConnected = false;
 function testConnection(retries = 10) {
   pool.getConnection((err, connection) => {
     if (err) {
-      console.error(`❌ Database connection failed (${11 - retries}/10):`, err.message);
+      if (retries === 10) {
+        console.log('⏳ Waiting for database initialization...');
+      }
       if (retries > 0) {
-        console.log('⏳ Retrying in 3 seconds...');
         setTimeout(() => testConnection(retries - 1), 3000);
       } else {
-        console.error('❌ Failed to connect to database after 10 retries');
+        console.error('❌ Failed to connect to database after 30 seconds');
       }
     } else {
-      console.log('✅ Database connected successfully!');
+      if (!isDbConnected) {
+        console.log('✅ Database connected successfully!\n');
+        isDbConnected = true;
+      }
       connection.release();
     }
   });
@@ -56,7 +61,6 @@ app.get('/api/countries', (req, res) => {
       console.warn('⚠️ No countries found in database');
       return res.send('<option>No countries found</option>');
     }
-    console.log(`✅ Loaded ${results.length} countries`);
     let options = '<option value="" selected>Select a Country</option>';
     results.forEach(r => options += `<option value="${r.code}">${r.name}</option>`);
     res.send(options);
@@ -73,7 +77,6 @@ app.get('/api/regions', (req, res) => {
       console.warn('⚠️ No regions found in database');
       return res.send('<option>No regions found</option>');
     }
-    console.log(`✅ Loaded ${results.length} regions`);
     let options = '<option value="" selected>Select Region</option>';
     results.forEach(r => options += `<option value="${r.id}">${r.name}</option>`);
     res.send(options);
@@ -91,7 +94,6 @@ app.get('/api/subregions', (req, res) => {
       console.warn('⚠️ No sub-regions found in database');
       return res.send('<option>No sub-regions found</option>');
     }
-    console.log(`✅ Loaded ${results.length} sub-regions`);
     let options = '<option value="" selected>Select Sub-Region</option>';
     results.forEach(r => options += `<option value="${r.id}">${r.name}</option>`);
     res.send(options);
@@ -108,7 +110,6 @@ app.get('/api/decades', (req, res) => {
       console.warn('⚠️ No decades found in database');
       return res.send('<option>No decades found</option>');
     }
-    console.log(`✅ Loaded ${results.length} decades`);
     let options = '<option value="" selected>Select Decade</option>';
     results.forEach(r => options += `<option value="${r.year}">${r.year}s</option>`);
     res.send(options);
