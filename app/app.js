@@ -31,10 +31,14 @@ function testConnection(retries = 10) {
         setTimeout(() => testConnection(retries - 1), 3000);
       } else {
         console.error('❌ Failed to connect to database after 30 seconds');
+        process.exit(1);
       }
     } else {
       if (!isDbConnected) {
-        console.log('✅ Database connected successfully!\n');
+        console.log('✅ Database connected successfully!');
+        console.log('\n🚀 DADD Analytics Dashboard is ready!');
+        console.log(`📊 Access the application at: \x1b[36mhttp://localhost:${port}\x1b[0m`);
+        console.log(`🌐 Or click here: \x1b[4m\x1b[36mhttp://localhost:${port}\x1b[0m\n`);
         isDbConnected = true;
       }
       connection.release();
@@ -253,7 +257,5 @@ app.post('/feature8', (req, res) => {
 });
 
 app.listen(port, () => {
-  console.log('\n🚀 DADD Analytics Dashboard is running!');
-  console.log(`📊 Access the application at: \x1b[36mhttp://localhost:${port}\x1b[0m`);
-  console.log(`🌐 Or click here: \x1b[4m\x1b[36mhttp://localhost:${port}\x1b[0m\n`);
+  console.log(`⚡ Server started on port ${port}`);
 });
