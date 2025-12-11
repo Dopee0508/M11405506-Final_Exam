@@ -252,5 +252,7 @@ app.post('/feature8', (req, res) => {
 });
 
 app.listen(port, () => {
-  console.log(`App running on port ${port}`);
+  console.log('\n🚀 DADD Analytics Dashboard is running!');
+  console.log(`📊 Access the application at: \x1b[36mhttp://localhost:${port}\x1b[0m`);
+  console.log(`🌐 Or click here: \x1b[4m\x1b[36mhttp://localhost:${port}\x1b[0m\n`);
 });
