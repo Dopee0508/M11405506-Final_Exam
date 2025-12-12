@@ -12,7 +12,7 @@ services:
       - ./database/data2.csv:/var/lib/mysql-files/data2.csv
       - ./database/ETL.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
-      - "3306:3306"
+      - "3306:3306"  # 如果此埠號被佔用，可改為 "33061:3306"
     # [新增] 健康檢查：確保資料庫完全初始化後才啟動 web
     healthcheck:
       test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost", "-u", "root", "-proot"]
