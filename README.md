@@ -102,7 +102,7 @@ cd M11405506-Final_Exam
 # Start the application
 docker compose up
 
-# Access the application at http://localhost:3000
+# Access the application at http://localhost:5506
 ```
 
 The application will automatically:
