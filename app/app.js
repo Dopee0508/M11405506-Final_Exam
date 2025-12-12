@@ -21,16 +21,17 @@ const pool = mysql.createPool({
 
 // 測試資料庫連線（帶重試機制）
 let isDbConnected = false;
-function testConnection(retries = 10) {
+function testConnection(retries = 20) {
   pool.getConnection((err, connection) => {
     if (err) {
-      if (retries === 10) {
+      if (retries === 20) {
         console.log('⏳ Waiting for database initialization...');
       }
       if (retries > 0) {
-        setTimeout(() => testConnection(retries - 1), 3000);
+        setTimeout(() => testConnection(retries - 1), 5000);
       } else {
-        console.error('❌ Failed to connect to database after 30 seconds');
+        console.error('❌ Failed to connect to database after 100 seconds');
+        console.error('💡 Connection error:', err.message);
         process.exit(1);
       }
     } else {
@@ -46,7 +47,7 @@ function testConnection(retries = 10) {
   });
 }
 
-testConnection();
+// testConnection will be called after server starts
 
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'index.html'));
@@ -258,4 +259,6 @@ app.post('/feature8', (req, res) => {
 
 app.listen(port, () => {
   console.log(`⚡ Server started on port ${port}`);
+  // 給容器網路一點時間穩定後再嘗試連線
+  setTimeout(() => testConnection(), 2000);
 });
